@@ -1,0 +1,401 @@
+#Deep Q-Learning player for Can't Stop
+# https://medium.com/@samina.amin/deep-q-learning-dqn-71c109586bae
+
+import numpy as np
+import random
+from collections import deque
+import tensorflow as tf
+from tensorflow import keras
+from keras import layers
+from typing import List, Tuple, Set
+
+# Import from existing file
+from CantStop import (
+    CantStopGame, 
+    PlayerStrategy, 
+    RuleOf28,
+    AdvancedAggressivePlayer
+)
+
+class DQNPlayer(PlayerStrategy):
+    #Deep Q-Learning player for Can't Stop
+    
+    def __init__(self, state_size=51, action_size=2, load_model=None, training=True):
+        self.state_size = state_size
+        self.action_size = action_size
+        self.training = training
+        
+        # Hyperparameters
+        self.learning_rate = 0.0001
+        self.gamma = 0.3 
+        self.epsilon = 1.0
+        self.epsilon_min = 0.3
+        self.epsilon_decay = 0.9995
+        self.batch_size = 16
+        
+        # Experience replay memory
+        self.memory = deque(maxlen=1000)
+        
+        # Metric Tracking
+        self.episode_rewards = []         
+        self.episode_q_values = []          
+        self.last_loss = 0.0                
+        self.episode_ro28_points = []
+
+        # Game state tracking
+        self.rolls_this_turn = 0
+        self.columns_started_this_turn = set()
+        
+        # Build networks
+        if load_model:
+            self.model = keras.models.load_model(load_model)
+            self.target_model = keras.models.load_model(load_model)
+        else:
+            self.model = self._build_model()
+            self.target_model = self._build_model()
+            self.update_target_model()
+    
+    def _build_model(self):
+        #Build the Q-network
+        model = keras.Sequential([
+            layers.Dense(64, activation='relu', input_shape=(self.state_size,)),
+            layers.Dropout(0.2),
+            layers.Dense(64, activation='relu'),
+            layers.Dropout(0.2),
+            layers.Dense(self.action_size, activation='linear')
+        ])
+        model.compile(optimizer=keras.optimizers.Adam(learning_rate=self.learning_rate),
+                     loss='mse')
+        return model
+    
+    def update_target_model(self):
+        #Copy weights from model to target_model
+        self.target_model.set_weights(self.model.get_weights())
+    
+    def _encode_state(self, game: CantStopGame) -> np.ndarray:
+        #Convert game state to feature vector
+        features = []
+        current_player = game.current_player
+        opponent_id = 1 - current_player
+        
+        # Model's permanent progress (11 values (1 per column), normalized
+        for col in range(2, 13):
+            progress = game.board.player_markers[current_player][col]
+            height = game.board.Column_Heights[col]
+            features.append(progress / height)
+        
+        # Opponent permanent progress (11 values (1 per column), normalized)
+        for col in range(2, 13):
+            progress = game.board.player_markers[opponent_id][col]
+            height = game.board.Column_Heights[col]
+            features.append(progress / height)
+        
+        # Current temp markers (11 values (1 per column), normalized)
+        for col in range(2, 13):
+            if col in game.board.temp_markers:
+                temp_progress = game.board.temp_markers[col] - game.board.player_markers[current_player][col]
+                height = game.board.Column_Heights[col]
+                features.append(temp_progress / height)
+            else:
+                features.append(0.0)
+        
+        # Completed columns (11 binary (1 per column))
+        for col in range(2, 13):
+            features.append(1.0 if col in game.board.completed else 0.0)
+        
+        # Number of rolls this turn (1, normalized)
+        features.append(min(self.rolls_this_turn / 10.0, 1.0))
+        
+        # Rule of 28 points (1, normalized)
+        ro28_points = RuleOf28.calulate_points(game, self.columns_started_this_turn)
+        features.append(ro28_points / 50.0)
+        
+        # Success probability (1)
+        temp_cols = set(game.board.temp_markers.keys())
+        if len(temp_cols) == 3:
+            features.append(game.board.get_success_probability(game.board.temp_markers))
+        else:
+            features.append(1.0)
+        
+        # Number of temp markers (1, normalized)
+        features.append(len(game.board.temp_markers) / 3.0)
+        
+        # Model's completed columns (1)
+        my_completed = sum(
+            1 for col in game.board.completed
+            if game.board.player_markers[current_player][col] >= game.board.Column_Heights[col]
+        )
+        features.append(my_completed / 3.0)
+        
+        # Opponent completed columns (1)
+        opp_completed = sum(
+            1 for col in game.board.completed
+            if game.board.player_markers[opponent_id][col] >= game.board.Column_Heights[col]
+        )
+        features.append(opp_completed / 3.0)
+        
+        # Any column completed this turn? (1)
+        completed_this_turn = any(
+            game.board.temp_markers.get(col, 0) >= game.board.Column_Heights[col]
+            for col in game.board.temp_markers.keys()
+        )
+        features.append(1.0 if completed_this_turn else 0.0)
+        
+        return np.array(features, dtype=np.float32)
+    
+    def remember(self, state, action, reward, next_state, done):
+        #Store experience in replay memory
+        self.memory.append((state, action, reward, next_state, done))
+    
+    def act(self, state):
+        #Choose action using epsilon-greedy policy
+        if self.training and np.random.rand() <= self.epsilon:
+            return random.randrange(self.action_size)
+        
+        state = state.reshape(1, -1)
+        q_values = self.model.predict(state, verbose=0)
+
+        if self.training:
+            self.episode_q_values.append(np.max(q_values[0]))
+
+        return np.argmax(q_values[0])
+    
+    def replay(self):
+        #Train on a batch of experiences
+        if len(self.memory) < self.batch_size:
+            return
+        
+        minibatch = random.sample(self.memory, self.batch_size)
+        
+        states = np.array([exp[0] for exp in minibatch])
+        actions = np.array([exp[1] for exp in minibatch])
+        rewards = np.array([exp[2] for exp in minibatch])
+        next_states = np.array([exp[3] for exp in minibatch])
+        dones = np.array([exp[4] for exp in minibatch])
+        
+        # Predict Q-values
+        current_q = self.model.predict(states, verbose=0)
+        next_q = self.target_model.predict(next_states, verbose=0)
+        
+        # Update Q-values using Bellman equation
+        for i in range(self.batch_size):
+            if dones[i]:
+                current_q[i][actions[i]] = rewards[i]
+            else:
+                current_q[i][actions[i]] = rewards[i] + self.gamma * np.max(next_q[i])
+        
+        # Train the model
+        history =self.model.fit(states, current_q, epochs=1, verbose=0)
+        
+        self.last_loss = history.history['loss'][0]
+
+        # Decay epsilon
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+    
+    def reset_episode_metrics(self):
+        #Reset metrics at the start of an episode
+        self.episode_rewards = []
+        self.episode_q_values = []
+        self.episode_ro28_points = []
+
+    def get_episode_metrics(self):
+        #Get metrics for the current episode
+        avg_reward = np.mean(self.episode_rewards) if self.episode_rewards else 0.0
+        avg_q_value = np.mean(self.episode_q_values) if self.episode_q_values else 0.0
+        avg_ro28_points = np.mean(self.episode_ro28_points) if self.episode_ro28_points else 0.0
+        return {
+            'avg_reward': avg_reward,
+            'avg_q_value': avg_q_value,
+            'loss': self.last_loss,
+            'avg_ro28_points': avg_ro28_points
+        }
+
+    def decide_to_roll(self, game: CantStopGame) -> bool:
+        if self.rolls_this_turn == 0:
+            self.columns_started_this_turn = set()
+            return True
+        
+        state = self._encode_state(game)
+        action = self.act(state)
+        
+        # Store state for later reward calculation
+        self.last_state = state
+        self.last_action = action
+        
+        return action == 1
+    
+    def choose_move(self, game: CantStopGame, valid_moves: List[Tuple[int, int]]) -> Tuple[int, int]:
+        self.rolls_this_turn += 1
+        
+        # Use heuristics for move selection
+        temp_cols = set(game.board.temp_markers.keys())
+        
+        for move in valid_moves:
+            if move[0] in temp_cols or move[1] in temp_cols:
+                return move
+        
+        return min(valid_moves, key=lambda m: abs(m[0] - 7) + abs(m[1] - 7))
+
+
+class RLTrainer:
+    #Training environment for DQN player
+    
+    def __init__(self, opponent=None):
+        self.dqn_player = DQNPlayer(training=True)
+        self.opponent = opponent if opponent else AdvancedAggressivePlayer()
+        self.episodes = 0
+        self.wins = 0
+        self.losses = 0
+    
+        self.cumulative_rewards=[]
+        self.cumulative_q_values = []
+        self.cumulative_ro28_points=[]
+        self.cumulative_losses=[]
+
+    def calculate_reward(self, game: CantStopGame, player_id: int, 
+                        action: int, busted: bool, stopped: bool, won: bool) -> float:
+        #Calculate reward for the current action
+        
+        if won:
+            return 100.0
+        
+        if busted:
+            return -50.0
+        
+        if stopped:
+            temp_sum = sum(game.board.temp_markers.values())
+            progress_reward = temp_sum * 2.0
+            
+            completed_bonus = sum(
+                10.0 for col in game.board.temp_markers.keys()
+                if game.board.temp_markers[col] >= game.board.Column_Heights[col]
+            )
+            
+            return progress_reward + completed_bonus
+        
+        return -0.5
+    
+    def train_episode(self, verbose=False):
+        #Train for one episode
+        game = CantStopGame(num_players=2)
+        
+        self.dqn_player.reset_episode_metrics()
+
+        dqn_is_player_0 = random.random() > 0.5
+        
+        if dqn_is_player_0:
+            strategies = [self.dqn_player, self.opponent]
+        else:
+            strategies = [self.opponent, self.dqn_player]
+        
+        for strategy in strategies:
+            if hasattr(strategy, 'rolls_this_turn'):
+                strategy.rolls_this_turn = 0
+            if hasattr(strategy, 'columns_started_this_turn'):
+                strategy.columns_started_this_turn = set()
+        
+        episode_memories = []
+        
+        while not game.is_game_over():
+            player = game.current_player
+            strategy = strategies[player]
+            
+            if hasattr(strategy, 'rolls_this_turn'):
+                strategy.rolls_this_turn = 0
+            if hasattr(strategy, 'columns_started_this_turn'):
+                strategy.columns_started_this_turn = set()
+            
+            turn_active = True
+            turn_start_state = None
+            
+            while turn_active:
+                is_dqn_turn = (dqn_is_player_0 and player == 0) or (not dqn_is_player_0 and player == 1)
+                
+                if is_dqn_turn and strategy.rolls_this_turn > 0:
+                    turn_start_state = self.dqn_player._encode_state(game)
+                    if hasattr(strategy, 'columns_started_this_turn'):
+                        ro28_points = RuleOf28.calulate_points(game, strategy.columns_started_this_turn)
+                        self.dqn_player.episode_ro28_points.append(ro28_points)
+
+                should_roll = strategy.decide_to_roll(game)
+                
+                if not should_roll:
+                    if is_dqn_turn and turn_start_state is not None:
+                        next_state = self.dqn_player._encode_state(game)
+                        reward = self.calculate_reward(game, player, 0, False, True, False)
+                        episode_memories.append((turn_start_state, 0, reward, next_state, False))
+                    
+                        self.dqn_player.episode_rewards.append(reward)
+
+                    game.stop()
+                    turn_active = False
+                    continue
+                
+                dice = game.roll_dice()
+                valid_moves = game.get_valid_moves(dice)
+                
+                if not valid_moves:
+                    if is_dqn_turn and turn_start_state is not None:
+                        next_state = self.dqn_player._encode_state(game)
+                        reward = self.calculate_reward(game, player, 1, True, False, False)
+                        episode_memories.append((turn_start_state, 1, reward, next_state, False))
+                    
+                        self.dqn_player.episode_rewards.append(reward)
+
+                    game.bust()
+                    turn_active = False
+                    continue
+                
+                move = strategy.choose_move(game, valid_moves)
+                
+                if hasattr(strategy, 'columns_started_this_turn'):
+                    for col in move:
+                        if col not in game.board.temp_markers:
+                            strategy.columns_started_this_turn.add(col)
+                
+                game.make_move(move)
+                
+                if is_dqn_turn and turn_start_state is not None:
+                    next_state = self.dqn_player._encode_state(game)
+                    reward = self.calculate_reward(game, player, 1, False, False, False)
+                    episode_memories.append((turn_start_state, 1, reward, next_state, False))
+
+                    self.dqn_player.episode_rewards.append(reward)
+                    turn_start_state = next_state
+
+
+        
+        dqn_won = (dqn_is_player_0 and game.winner == 0) or (not dqn_is_player_0 and game.winner == 1)
+        
+        if dqn_won:
+            self.wins += 1
+            final_reward = 100.0
+        else:
+            self.losses += 1
+            final_reward = -100.0
+        
+        if episode_memories:
+            last_exp = episode_memories[-1]
+            episode_memories[-1] = (last_exp[0], last_exp[1], final_reward, last_exp[3], True)
+            self.dqn_player.episode_rewards.append(final_reward)
+        for exp in episode_memories:
+            self.dqn_player.remember(*exp)
+        
+        if len(self.dqn_player.memory) >= self.dqn_player.batch_size:
+            self.dqn_player.replay()
+        
+        metrics = self.dqn_player.get_episode_metrics()
+        self.cumulative_rewards.append(metrics['avg_reward'])
+        self.cumulative_q_values.append(metrics['avg_q_value'])
+        self.cumulative_ro28_points.append(metrics['avg_ro28_points'])
+        self.cumulative_losses.append(metrics['loss'])
+
+        self.episodes += 1
+        
+        if verbose and self.episodes % 10 == 0:
+            win_rate = self.wins / self.episodes if self.episodes > 0 else 0
+            print(f"Episode {self.episodes}, Wins: {self.wins}, Losses: {self.losses}, "
+                  f"Win Rate: {win_rate:.2%}, Epsilon: {self.dqn_player.epsilon:.3f}")
+        
+        return dqn_won
