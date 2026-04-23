@@ -1,0 +1,201 @@
+\newpage
+
+```{r load_data4, echo=FALSE}
+# string columns will be read in as strings and not factors now
+run1 <- read.csv(here::here("data", "run1_10000.csv"),stringsAsFactors= FALSE)
+run2 <- read.csv(here::here("data", "run2_20000.csv"),stringsAsFactors= FALSE)
+run3 <- read.csv(here::here("data", "run3_25000.csv"),stringsAsFactors= FALSE)
+run4 <- read.csv(here::here("data", "run4_40000.csv"),stringsAsFactors= FALSE)
+run5 <- read.csv(here::here("data", "run5_25000.csv"),stringsAsFactors= FALSE)
+run6 <- read.csv(here::here("data", "run6_22029.csv"),stringsAsFactors= FALSE)
+run7 <- read.csv(here::here("data", "run7_20000.csv"),stringsAsFactors= FALSE)
+run8 <- read.csv(here::here("data", "run8_10000.csv"),stringsAsFactors= FALSE)
+run9 <- read.csv(here::here("data", "run9_20000.csv"),stringsAsFactors= FALSE)
+run10 <- read.csv(here::here("data", "run10_20000.csv"),stringsAsFactors= FALSE)
+run11 <- read.csv(here::here("data", "run11_20000.csv"),stringsAsFactors= FALSE)
+run12 <- read.csv(here::here("data", "run12_15000.csv"),stringsAsFactors= FALSE)
+run13 <- read.csv(here::here("data", "run13_20000.csv"),stringsAsFactors= FALSE)
+run14 <- read.csv(here::here("data", "run14_20000.csv"),stringsAsFactors= FALSE)
+run15 <- read.csv(here::here("data", "run15_20000.csv"),stringsAsFactors= FALSE)
+run16 <- read.csv(here::here("data", "run16_20000.csv"),stringsAsFactors= FALSE)
+run17 <- read.csv(here::here("data", "run17_20000.csv"),stringsAsFactors= FALSE)
+run18 <- read.csv(here::here("data", "run18_20000.csv"),stringsAsFactors= FALSE)
+overall <- read.csv(here::here("data","RunsOverall.csv"),stringsAsFactors=FALSE)
+parameter_table <- read.csv(here::here("data","Parameter_table.csv"),stringsAsFactors=FALSE)
+AvgQval <- read.csv(here::here("data","AvgQval.csv"),stringsAsFactors=FALSE)
+feature <- read.csv(here::here("data","feature_importance.csv"),stringsAsFactors=FALSE)
+```
+
+# Analysis and Results {#ana-res}
+
+## Introduction
+
+We trained on 367,029 simulations split between 18 different training sessions, with a different number of games per training session. The simulations were segmented due to time and hardware constraints. Before each run, the hyperparameters were adjusted based on the previous run's results and the target number of simulations. The goal when tuning the hyperparameters was to guide the algorithm towards our research objective of creating a successful Can't Stop computer algorithm. The hyperparameters that had the most changes are the discount factor and epsilon minimum and decay. Discount factor controls the model's predicted Q-values and therefore the play style, where decreasing it reduces predicted Q-values. Epsilon decay determines the rate at which our model will transition from random actions to strategic actions, and the minimum is the smallest chance for the model to make random decisions that we are satisfied with. The raw data is available for download from the Github repository linked in Appendix \@ref(ApdxCode).
+
+## Predicted vs Actual Q-values 
+
+We will start evaluating the model's performance by comparing the predicted Q-values to the rewards (actual Q-values) across each episode. Due to the high volume of data points, we smooth the data using the moving average technique with 500 games to reduce the noise in the data. This makes the visualization of the data easier to see and interpret.
+
+```{r AvgQval, echo=FALSE, fig.height=1.5, fig.width=7, fig.alt="Table of Predicted and Actual Q-Values"}
+kable(AvgQval, 
+      col.names=c("Run", "Avg Reward","Avg Q-value"),
+      format='latex', 
+      caption = "Average Predicted and Actual Q-values",format.args = list(scientific = FALSE)
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+```{r rewardandq1, warnings=FALSE, messages=FALSE, fig.cap="Runs 1-3 Rewards vs Predicted Q-values (smoothed)",fig.height=8.5,fig.width=7, echo=FALSE, fig.alt="Graphs of runs one through three showing predicted and actual Q-values"}
+p1<-ggplot(run1, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 1")
+p2<-ggplot(run2, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 2")
+p3<-ggplot(run3, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 3")
+plot_grid(p1,p2,p3,nrow=3)
+```
+
+```{r rewardandq2, warnings=FALSE, messages=FALSE, fig.cap="Runs 4-6 Rewards vs Predicted Q-values (smoothed)",fig.height=8.5,fig.width=7, echo=FALSE, fig.alt="Graphs of runs four through six showing predicted and actual Q-values"}
+p4<-ggplot(run4, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 4")
+p5<-ggplot(run5, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 5")
+p6<-ggplot(run6, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 6")
+plot_grid(p4,p5,p6,nrow=3)
+```
+
+```{r rewardandq3, warnings=FALSE, messages=FALSE, fig.cap="Runs 7-9 Rewards vs Predicted Q-values (smoothed)",fig.height=8.5,fig.width=7, echo=FALSE, fig.alt="Graphs of runs seven through nine showing predicted and actual Q-values"}
+p7<-ggplot(run7, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 7")
+p8<-ggplot(run8, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 8")
+p9<-ggplot(run9, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 9")
+plot_grid(p7,p8,p9,nrow=3)
+```
+
+```{r rewardandq4, warnings=FALSE, messages=FALSE, fig.cap="Runs 10-12 Rewards vs Predicted Q-values (smoothed)",fig.height=8.5,fig.width=7, echo=FALSE, fig.alt="Graphs of runs ten through twelve showing predicted and actual Q-values"}
+p10<-ggplot(run10, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 10")
+p11<-ggplot(run11, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 11")
+p12<-ggplot(run12, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 12")
+plot_grid(p10,p11,p12,nrow=3)
+```
+
+```{r rewardandq5, warnings=FALSE, messages=FALSE, fig.cap="Runs 13-15 Rewards vs Predicted Q-values (smoothed)",fig.height=8.5,fig.width=7, echo=FALSE,fig.alt="Graphs of runs thirteen through fiftheen showing predicted and actual Q-values"}
+p13<-ggplot(run13, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 13")
+p14<-ggplot(run14, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 14")
+p15<-ggplot(run15, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 15")
+plot_grid(p13,p14,p15,nrow=3)
+```
+
+```{r rewardandq6, warnings=FALSE, messages=FALSE, fig.cap="Runs 16-18 Rewards vs Predicted Q-values (smoothed)",fig.height=8.5,fig.width=7, echo=FALSE,fig.alt="Graphs of runs sixteen through eighteen showing predicted and actual Q-values"}
+p16<-ggplot(run16, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 16")
+p17<-ggplot(run17, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 17")
+p18<-ggplot(run18, aes(x = episode)) + geom_line(aes(y=q_value_smooth,color="q_value_smooth"),linetype = 2) + geom_line(aes(y=reward_smooth,color="reward_smooth"),linetype = 3) + labs(x="Episode",y="",title="Run 18")
+plot_grid(p16,p17,p18,nrow=3)
+```
+
+### Observations and Analysis
+
+Figures \@ref(fig:rewardandq1)-\@ref(fig:rewardandq6) contain results for the eighteen runs. We can see an overall issue with the model overestimating the Q-values during each training session. While the Q-values are increasing over the training period, the reward remains near zero, not matching the Q-values growth. This means the model is overestimating the quality of its choices each game.
+
+```{r parametertable, echo=FALSE, fig.height=1.5, fig.width=7,fig.alt="Table of the paramter values in each run"}
+kable(parameter_table, 
+      col.names=c("Run", "Simulation Size","Learning Rate","Discount Factor","Epsilon Decay","Epsilon Minimum"),
+      format='latex', 
+      caption = "Parameter Values",format.args = list(scientific = FALSE)
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+The first run was 10,000 simulations, with $\alpha=0.0001$, $\gamma=0.95$, and $\epsilon$ decay and minimum set to 0.995 and 0.01 respectively. We can see the overestimation immediately, which could be due to the beginning stages of training where the model is playing the game for the very first time. 
+For the second and third run, the number of simulations was increased to 20,000 and 25,000 respectively. Since the training periods will be longer the $\epsilon$ decay is changed to 0.9999 for a slower decay which will allow the model to spend more time exploring new strategies. There is a small increase in the reward value across the training period, implying the model is slowly learning.
+
+The fourth training session was 40,000 simulations with the same hyperparameter values as the previous run. The length of the run was increased in an attempt to reduce the overestimating issue by giving the model a longer training session. As seen in Figure \@ref(fig:rewardandq2) above, increasing the simulations did not have a noticeable effect in reducing the Q-value overestimation. The fifth and sixth training sessions were both 25,000 simulations. The sixth session was cut short at 22,029 games due to the training not finishing in the amount of time available. The training taking too long is possibly due to the decrease of the $\epsilon$ decay to 0.995 causes the model to spend more time exploring. The reward values during the fifth session are the highest overall with an average of 1.302.
+The sixth session's $\epsilon$ decay was set to 0.995 to see if a shorter exploration period would affect the overestimation. While the predicted value peak was lower than previous runs, the reward values were still very low. 
+
+For the seventh training session, the number of simulations was reduced to 20,000 and the $\epsilon$ decay was set to 0.99955. For the eighth training run, the number of simulations was again reduced to 10,000 and $\epsilon$ decay was set to 0.995. The peak of the predicted values was lower, hanging around 60. For the ninth training, the simulations were returned to 20,000 and $\epsilon$ decay was set to 0.9995. Interestingly the model reached the plateau of its predicted Q-values sooner than any other training session. 
+
+The tenth and eleventh training session had similar results to run 9. The $\epsilon$ minimum was raised to 0.3 to reduce the model falling into overestimating bad strategies. However, session 10 and 11 had an average reward of 1.626 and 1.566 respectively. This implies the gap between the predicted and actual values is getting smaller. This could be because enough training time has passed for the model to start learning the game. For the twelfth training session the simulation number was reduced to 15,000 and $\epsilon$ minimum was set to 0.1, and most significantly the discount factor was reduced to 0.5 to encourage short term reward seeking behavior. As seen in Figure \@ref(fig:rewardandq4), there was a larger decrease in the overestimation, with the predicted values getting closer to the actual values as the model finished training.
+
+The next three training sessions are run with almost the same parameters as session 12 to see if the decreased discount will improve the win rate. The $\epsilon$ minimum was set to 0.3 for 14 and 15 to encourage more learning exploration. As seen in Figure \@ref(fig:rewardandq5) and Table \@ref(tab:AvgQval), the overestimation continues to be reduced. The average reward values increase with the predicted values in sessions 14 and 15. We can see that reducing the discount factor did reduce the overestimation as predicted. The model making short term decisions appears to be increasing the quality of the model's training.
+
+Session 16's rewards are similar to session 15 with slightly larger predicted values. For session 17, the discount factor was reduced to 0.3 because of the lack of improvement from session 15 to 16 to see if an even smaller discount factor would decrease the difference between the reward and predicted values. This did cause session 17 to have lower overall values, and when the reward and predicted values increase in session 18 the difference between the values increases as well.
+
+### Conclusion
+
+Looking at the predicted vs actual Q-values to determine our models performance, we can see that it was not as successful as we had hoped with the high discount factor. There was a large presence of overestimation in the predicted values, which seemed to slow the model's training process. However, upon reducing the discount factor we saw an immediate reduction in overestimation. This reduction remains present through the rest of the training. Starting training with the model prioritizing long term rewards can cause the model to chase larger Q-values that are unattainable. The model learned to make decisions that it incorrectly predicted will lead to high rewards while in practice it was making poor decisions. This leads to the large difference seen between the predictions and actual values, the model learned to overestimate the quality of its decisions. Since a Can't Stop game is on the shorter side, typically 8-10 turns per player, the higher discount factor is trying to find rewards for a large number of turns that likely won't be reached. 
+Starting the training process with a decreased discount factor and increasing it as the model performance increases could lead to a better overall performance of the model in a shorter training period. Different small discount factor values could be experimented with to see which one best fits the Can't Stop play style.
+
+## Opponent Win Rates
+
+Looking at the model's win rate, we will analyze how its performance changes across each training session. Also, we look at how it performs against the individual strategies to find the models weaknesses and strengths.
+
+```{r overall, warnings=FALSE, messages=FALSE, fig.cap="Overall Win Rate per Training Session",fig.height=2.5,fig.width=7, echo=FALSE,fig.alt="Model's Overall win rate"}
+ggplot(overall,aes(Run, win_rate_overall)) + 
+  geom_line() + labs(x="Run",y="Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+```
+
+```{r vsRandom, warnings=FALSE, messages=FALSE, fig.cap="Versus Random Win Rate per Training Session",fig.height=2.5,fig.width=7, echo=FALSE,fig.alt="Model's win rate against the Random Player"}
+ggplot(overall,aes(Run, RP_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Random Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+```
+
+```{r vsRo28, warnings=FALSE, messages=FALSE, fig.cap="Versus Ro28 and Smart Ro28 Win Rate per Training Session",fig.height=5,fig.width=7, echo=FALSE,fig.alt="Model's win rate against the Rule of 28 player and smart Rule of 28 player"}
+r28p<-ggplot(overall,aes(Run, R28P_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Ro28 Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+sr28p<-ggplot(overall,aes(Run, SR28P_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Smart Ro28 Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+plot_grid(r28p,sr28p,nrow=2)
+```
+
+```{r vsCaut, warnings=FALSE, messages=FALSE, fig.cap="Versus Cautious Players Win Rate per Training Session",fig.height=5,fig.width=7, echo=FALSE,fig.alt="Model's win rate against the decent Cautious player and advanced Cautious player"}
+acp<-ggplot(overall,aes(Run, ACP_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Adv. Cautious Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+dcp<-ggplot(overall,aes(Run, DCP_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Decent Cautious Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+plot_grid(dcp,acp,nrow=2)
+```
+
+```{r vsAggr, warnings=FALSE, messages=FALSE, fig.cap="Versus Aggressive Players Win Rate per Training Session",fig.height=5,fig.width=7, echo=FALSE,fig.alt="Model's win rate against the decent aggressive player and advanced aggressive player"}
+aap<-ggplot(overall,aes(Run, AAP_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Adv. Aggr. Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+dap<-ggplot(overall,aes(Run, DCP_winrate)) + 
+  geom_line() + labs(x="Run",y="Versus Decent Aggr. Win Rate") + 
+  scale_x_continuous(breaks=seq(1,18,1)) + scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),limits=c(0,0.35))
+plot_grid(dap,aap,nrow=2)
+```
+
+### Observations and Analysis
+
+As shown in Figure \@ref(fig:overall), the win rate increases from training session 1 to 2, as we would expect and want to see. It then fluctuates before noticeably dropping at training session 6. The win rate decrease was likely a result of changing the $\epsilon$ decay to 0.995, which caused the model to quickly stop exploring new strategies during training. For the following training sessions the win rate slightly fluctuates and then increases into the end of the training. Although the discount factor was decreased for training session 12, compared to 10 and 11 it does not appear to have made a noticeable impact on the win rate. For sessions 13 and 14, the win rate does not increase staying the same $5.2\%$. Session 15 has a minor increase to almost $6\%$. The continued training with the decreased discount factor likely has led to this win rate increase. However, for session 16 the win rate drops down to before, similar to 13 and 14. Session 17 the discount was decreased further, which had a positive effect on the win rate, looking like session 15. However, going into session 18 with the same parameters the win rate dropped. This could be a natural fluctuation in the training process.
+
+Using the random player as a baseline for the model's performance, we hope to see the model be able to perform better than random actions. However, as seen in Figure \@ref(fig:vsRandom) it did not perform as well as we hoped. However, compared to the other individual player win rates the model had the highest win rate against the random player for every training session. The increases and decreases follow the overall win rate trend. The second training had the highest win rate out of the 12 training sessions. The win rate seems to be reacting to the change in $\epsilon$ decay. When the decay is changed to be faster in a longer training session, we see a major decrease of 27% to 7%. This is supported by session 10, where the win rate is above 20% for the first time since session 5. As stated previously, the $\epsilon$ minimum was decreased to 0.3, which has a similar effect to slowing the decay. This keeps the model in the exploration stage longer. In session 12 the impact of the decreased discount factor is more visible, the decrease forces the model to make more short term choices so we expect a slight performance decrease. While session 13 dips a little, we see a big rise through session 14 and 15. Session 16 drops to a similar win rate as session 14. From this drop the discount factor is decreased to 0.3 to improve win rates, which we see in session 17's increase. Session 18's win rate drops, not continuing session 17's increase.
+
+The Rule of 28 is one the best performing strategies in practice. Our model's performance is seen in Figure \@ref(fig:vsRo28). The model's performance against the pure Ro28 player was the second highest individual win rate during the training. The win rate follows the same overall trend as seen earlier, a rise in the beginning that falls in session 6 followed by a final rise. Comparing the win rate to the smart Ro28, we see a noticeable decrease in performance. Since one of the models inputs was its Ro28 score, this possibly gave it an advantage over the pure strategy. However, introducing more advanced decisions put our model at a disadvantage. Though the win rate against the smart Ro28 stays at $\approx1\%$, in the last training session we see an increase to almost 3%. This could correlate with the decrease in the discount factor, the model being able to make more short sighted decisions gives it an advantage over the strategy's complex decision-making algorithm. For the pure Ro28, sessions 13, 15, 16, and 17 all have similar win rates to 12, implying the discount factor decrease is responsible for improving model performance. Session 14 has a slight dip, which is likely an outlier due to a lower number of matches against the Ro28 player. Against the smart Ro28 player, the performance of session 13 follows 12 but it dips back down for sessions 14 though 18. 
+
+Figure \@ref(fig:vsCaut) tells us the model did poorly against both levels of the cautious strategies. The model did slightly better against the decent level than the advanced level, but not by much. For session 13 against the decent level we see a spike, with the highest win rate of $\approx4\%$. Looking ahead to Figure \@ref(fig:vsAggr), the outcome of the model's performance against the aggressive players follows a similar trend of low performance with a spike at session 13 against the decent level. The spike at session 13 could be due to a good luck streak for the model or a low amount of matches. This suggests our model's weakness were these more complex decision-focused strategies. The factors these strategies consider like opponent positioning put them at a greater advantage. 
+
+### Conclusion
+
+Looking at the win rates overall and individually, the model did not perform as well as we expected. Despite that we can still gain insight into how the model was developing its own strategy. The model was being held back by a high discount factor, which made it difficult to hone an effective strategy. While giving the model training time with a smaller discount factor did not show the larger growth we desired, the consistency of its performance was much better. More training with a smaller discount factor that gradually increases with the models performance would likely result in a more powerful model. Another alternative is training a new model on a low and slowly increasing discount factor to ensure it only learns short term reward behavior to start. As well, more time in the early training stage with a high $\epsilon$ would allow the model to explore and find more unique strategies. The model appeared to have been developing a working strategy, as it was a noticeable amount of games against the random player. The only non-random player the model showed some success against was pure Ro28. Similar to the pure Ro28, the models weakness was the complex decision making which included consideration of opponents progress. This implies the model's strategy was similar to Ro28, sharing a similar weakness.
+
+## Feature Importance
+
+For testing the importance of each feature, we use the permutation feature importance method. This method tests the model's features by randomizing a feature's values, then recording the model's win rate. We will use the win rate against the Rule of 28 player as our baseline to compare when testing the randomized feature values. For each feature, they will be permuted for 200 games with the win rate being recorded. The baseline win rate against the Rule of 28 player was $5.5\%$, so the change in win rate percentage is measured as the difference between the baseline and permuted win rate. The results are shown in Table \@ref(tab:featuretable), ordered from most to least important. The features with a negative percent change indicates the model performed better with the feature permuted compared to the base line.
+
+```{r featuretable, echo=FALSE, fig.height=2, fig.width=7,fig.alt="Table of each feature and the model's win rate with the removed feature, ranked from worst to best"}
+kable(feature, 
+      col.names=c("Ranking", "Feature","Permutated Win Rate","Win Rate % Change"),
+      format='latex', longtable=TRUE,
+      caption = "Permutation Feature Importance",format.args = list(scientific = FALSE)
+) %>%
+  kable_styling(font_size = 8)
+```
+
+### Observations and Analysis
+
+Looking at the table, we see that columns_completed_this_turn, temp_marker_column_7, opp_progress_column_7, and my_completed_count showed the highest decrease in performance when permuted. We expect columns_completed_this_turn feature to be important since having correct information about your progress during your turn is an essential part of the game. The model was likely stopping upon completing a column to secure progress, a very common strategy which is usually a good choice. The second most important feature, temp_marker_column_7, implies the model had realized that column 7 was the most likely to be rolled and focused on winning that column. This is supported by the next important feature opp_progress_column_7, which is the model gauging if they are going to lose column 7 to the opponent. The model has learned to prioritize winning column 7 before the opponent. The my_completed_count feature means the model was making decisions based on how close it was to winning, and we can see in with the $7^{th}$ ranked opp_completed_count that the model learned to change its decision making based on how close it was to winning or losing. Looking at the features with a negative percent change, my_progress_col_9 had the biggest difference at $-5.5$. This possibly implies that the model could have learned a bad strategy involving column 9. Randomizing the value could have caused the model to play better by accident or the feature was redundant and a different feature was already capturing the trend of column 9. Another possibility could be related to my_progress_col_5, which also had a very low score. It's possible the model learned that these two columns were not worth going for, as they both have equal probability of being rolled. If we compare the probability of getting 5 or 9 to their column height, it could be a disadvantage to try and win these columns. This pattern is not seen with any other symmetric columns, so it could be unique to 5 and 9. Interestingly the Rule of 28 points feature also recorded a $5\%$ win rate increase when permuted. The model likely learned a bad understanding of the Rule of 28, so randomizing the values helped it perform better essentially ignoring it. As well since it was going against the actual Rule of 28 player, it was more successful not using the feature it did not understand against a strategy that did.
+
+### Conclusion
+
+From the feature importance analysis, we can see the model developed both helpful and unhelpful strategies during its training. As we would expect, the model developed a strategy involving using the columns completed during a turn and completed columns overall. As well the model was using the opponent's completed column count, implying the model had learned to change the play style based on how close it or the opponent was to winning. This is a very helpful play style that likely was behind the winning games during training. As well the model learned to differentiate the value between columns, as it prioritizes column 7 over all the others. Focusing on these features in future training might improve the models performance. This most likely came naturally from the fact 7 has the highest probability of being rolled. The Rule of 28 points feature's lack of importance implies the model might perform better if trained without the feature, instead it might be better to add later into the training process. Many features had little to no impact on the performance, so reducing the features to be less redundant could improve the performance in future training.

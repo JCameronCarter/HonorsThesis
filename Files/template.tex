@@ -1,0 +1,125 @@
+%% Modified from the original thesisdown template.tex
+%%
+%% Preamble
+%%
+\documentclass[12pt]{article}
+% Packages are extensions to the basic LaTeX functions. Whatever you
+% want to typeset, there is probably a package out there for it.
+% Chemistry (chemtex), screenplays, you name it.
+% Check out CTAN to see: https://www.ctan.org/
+\usepackage{amsmath}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{soul}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{amstext}
+\usepackage{amsthm}
+\usepackage{chemarr} %% Useful for one reaction arrow, useless if you're not a chem major
+\usepackage{booktabs}
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\usepackage{lmodern}
+\usepackage{float}
+\floatplacement{figure}{H}
+\usepackage{calc}
+\usepackage{rotating}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Loads the YSU Style Package (YSU.sty)
+\usepackage{YSU} 
+
+% For pandoc to work
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\providecommand{\pandocbounded}[1]{#1}
+% needed for proper highlighting
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
+% From {rticles}
+$if(csl-refs)$
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+% for Pandoc 2.8 to 2.10.1
+\newenvironment{cslreferences}%
+  {$if(csl-hanging-indent)$\setlength{\parindent}{0pt}%
+  \everypar{\setlength{\hangindent}{\cslhangindent}}\ignorespaces$endif$}%
+  {\par}
+% For Pandoc 2.11+
+% As noted by @mirh [2] is needed instead of [3] for 2.12
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1 \everypar{\setlength{\hangindent}{\cslhangindent}}\ignorespaces\fi
+  % set entry spacing
+  \ifnum #2 > 0
+  \setlength{\parskip}{#2\baselineskip}
+  \fi
+ }%
+ {}
+\usepackage{calc} % for calculating minipage widths
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+$endif$
+
+%%% Thesis-specific information
+\title{$thesis_title$}
+\author{$author$}
+% NOTE the change to the \date command.  This is important for the copyright page
+\date{$thesis_month$}{$thesis_year$} 
+\YSUdegree{$thesis_degree$}{$thesis_program$}
+\committee{$thesis_advisor$}{$committee_memA$}{$committee_memB$}
+
+\begin{document}
+
+%%% Frontmatter
+\createtitlepage
+\createsignaturepage
+
+%%% Copyright page (optional)
+%%% YSU Grad College guidelines state to delete this page if copyright
+%%% not registered with copyright.gov
+\createcopyrightpage
+
+%%% Acknowledgements (optional)
+\begin{aknowledgements}
+\normalsize
+\input{frontmatter/acknowledgements}
+\end{aknowledgements}
+
+%%% Abstract is required.  Double-spaced, maximum one (1) page
+\begin{abstract}
+\normalsize
+\input{frontmatter/abstract}
+\end{abstract}
+
+%%% Table of contents
+\tableofcontents 
+
+%%% List of Tables (optional)
+\listoftables
+
+%%% List of Figures (optional)
+\listoffigures
+
+%%%%% Main body of Thesis
+\begin{thesis}
+
+$body$
+
+\end{thesis}
+\end{document}

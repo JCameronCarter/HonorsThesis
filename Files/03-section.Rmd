@@ -1,0 +1,215 @@
+\newpage
+
+```{r load_data3, echo=FALSE}
+RO28_path <- here::here("data", "RO28_table.csv")
+# string columns will be read in as strings and not factors now
+RO28_table <- read.csv(RO28_path, stringsAsFactors = FALSE)
+```
+
+# Methods {#mets}
+
+For our Can't Stop computer program, we choose to implement a model using deep Q networks (DQN).
+A DQN consists of a neural network and Q-learning.
+The combination of the neural network model and Q-learning algorithm is a powerful tool for computer learning.
+
+## Q-Learning
+
+Q-learning is a reinforcement algorithm based around using a Bellman equation as a value iteration update.
+We define Q-learning by the equation: $$Q^{new}(S_{t},A_{t})\leftarrow(1-\alpha)\cdot Q(S_{t},A_{t})+\alpha\cdot\bigg(R_{t+1}+\gamma\cdot\underset{a}maxQ(S_{t},a)\bigg)$$ (Watkins 1989), where the the learned action-value function, $Q$, directly approximates $q_{*}$, the optimal action-value function, independent of the policy being followed.
+The policy still has an effect in that it determines which state–action pairs are visited and updated (Sutton and Barto 2015).
+Watkins showed that since this algorithm process is a finite Markov decision process, Q-learning will converge, making this a mathematically powerful algorithm to use.
+
+$Q(S_{t},A_{t})$ represents the Q-value, or quality, of an action $A_{t}$ in a state $S_{t}$.
+Q-values are continuous real numbers.
+Learning rate or step size, $\alpha$, determines how much new information overrides old information.
+The values of the learning rate are $0\le\alpha\le1$, where $\alpha=0$ is using other prior knowledge (not learning) and $\alpha=1$ using only recent knowledge.
+The parameter $\gamma$ is the discount factor, this determines the importance of the future reward.
+A value of $\gamma=0$ will only consider current rewards ($R_{t+1}$) while values approaching $\gamma=1$ will go for long-term higher rewards.
+$R_{t+1}$ is the reward received when moving to next state $S_{t+1}$ after choosing action $A_{t}$ in state $S_{t}$.
+$\underset{a}maxQ(S_{t},a)$ is the maximum Q-value for $S_{t+1}$, portraying the best possible reward achievable in $S_{t+1}$.
+$Q(S_{t},A_{t})$ is weighted by one minus learning rate, $R_{t+1}$ is weighted by learning rate, and $\underset{a}maxQ(S_{t},a)$ is weighted by learning rate and discount factor.
+
+As an example of simple Q-learning, consider a 5 by 5 grid maze with a start and an exit.
+The algorithm's goal is to get to the exit of the maze.
+There are only 4 possible actions, up, down, left, and right.
+Here there are 25 states for each of the cells and a terminal state for reaching the exit.
+For each state, there is a Q-value for each action.
+Since each state has four Q-values, with 25 states there are 100 different Q-values.
+We can create a table of Q-values, with each column as an action and each row as a state.
+At the start of the algorithm, each Q-value in the table is zero.
+As the algorithm explores the maze, it updates the Q-values using the above equation.
+We assign a reward value to reaching the exit, so after multiple episodes, reaching the exit, the algorithm will have learned the shortest path to the exit where the best action in each state will have the highest Q-value.
+
+## Neural Network
+
+The second component of DQN is the neural network (NN), also referred to as deep learning.
+A NN is a statistical model that takes an input vector of variables and builds a nonlinear function $f(X)$ to predict the response $Y$ (James, Witten, Hastie, & Tibshirani 2023).
+The structure of NN feeds forward through its three layers: input, hidden, and output.
+The input layer output feeds into each hidden layer unit, which then feeds into the output, returning a prediction.
+We use an activation function in the hidden layer to introduce nonlinearity to the inputs.
+A useful type of NN is a convolutional neural network (CNN).
+A CNN takes inputs that can be represented in a grid-like format, such as an image or game board, and captures spatial patterns located in these grids.
+For a board game, the prediction can provide insight into possible strategies and optimization.
+
+Using CNN's ability to interpret a board game as an input and extract patterns, we can feed these patterns into a Q-learning algorithm to create Q-values for the large number of state-action pairs.
+The process of using a CNN is to take a complex input and transform it to be interpreted by the Q-learning algorithm for training a computer to do a task, such as playing Can't Stop.
+
+## Hardware and Software
+
+The training and testing was coded in Python 3.12.10, using the IDE Visual Studio Code 1.110.1. The DQN was built using the Tensorflow 2.20.0 library and Keras 3.13.0 API. The hardware used was a NVIDIA GeForce GTX 1650 GPU, AMD Ryzen 7 5800HS CPU @ 3.20 GHz, and 16GB of RAM.
+
+## Strategies
+
+In order to prevent overfitting while training the DQN and to test its accuracy, we define multiple different strategies, or playstyles, as opponents for the DQN to train against.
+These are:
+
+*   A completely random player
+
+*   A cautious player with two levels of skill
+
+*   An aggressive player with two levels of skill
+
+*   A Rule of 28 player with two levels of skill
+
+An implementation of Glenn & Aloi's genetic algorithm was considered but was determined to be beyond the scope of this thesis.
+
+In order to make some of the strategies more robust, we used the statistical odds for different column combinations using calculations provided by Tate and Renner (See Appendix). The second to last column is the percentage chance of advancing on one roll for your marked columns. The last column is the maximum rolls you can take before your expected gains are exceeded by your expected losses. For example, looking at the 3 column odds section if we have columns 3, 7, and 8 marked each individual roll has a 89% to not bust (we have a 89% chance to get a dice combination with at least one pair that sums to 3, 7, or 8), and we can roll 8 times before we expect the chance of busting to be greater than not busting. The number of times we can roll, $X$, follows a geometric distribution, where the success, $p$, is probability of the individual roll busting. Note that $1-p$ is the probability a roll not busting, the same as the second to last column. The geometric distribution has the expected value $E(X)=\frac{1-p}{p}$. Taking the expected value, we get the number of rolls we can take before we expect to bust. For example when $p=11\%$, $\frac{1-0.11}{0.11}=8.09$ which was rounded down to 8. 
+
+### Random Player
+
+A player that makes every decision randomly.
+It will serve as a performance baseline for if the DQN is actually learning to play the game.
+We will expect that any reasonable human strategy or any successful machine learning strategy will outperform the random player in a majority of games.
+
+### Cautious Player
+
+A player that uses a cautious strategy, always stopping after 3 successful rolls or if a column is completed.
+There are two skill levels, the decent and advanced.
+The decent level will stop early if the chance of failing a roll is $\ge75\%$, and will pick columns with existing progress or columns closer to the center of the board. The failing roll chance is based on Tate & Renner's odds table.
+The advanced level inherits the stopping logic of the decent level and uses the opponent's and its own marker positions to determine which columns to play.
+This is calculated as a penalty score for each column, where the column with the lowest score is the best choice.
+The closer an opponent is to completing a column, the higher the penalty score it gets.
+Owned columns with good progress get a lower penalty score.
+Each column gets a penalty score that increases the further from the center the column is.
+The code for calculating this is outlined in the algorithm below:
+
+\begin{algorithm}[H]
+\caption{Calculate a penalty score for each column}\label{alg:cap}
+\begin{algorithmic}
+\Require $\text{column score}=0$
+\For{each column}
+    \If{a column is completed}
+        \State $+1000$ column score
+    \EndIf
+    \For{each opponent} 
+        \If{column progress $>70\%$}
+            \State $+50$ column score
+        \ElsIf{column progress $>50\%$}
+            \State $+20$ column score
+        \ElsIf{column progress $>30\%$}
+            \State $+5$ column score
+        \EndIf
+    \EndFor
+    \If{We have column progress}
+        \State $+(-20)\times(\text{column progress)}$ column score
+    \EndIf
+    \State $+|\text{column}-7|\times0.5$ column score  
+    \Comment{Higher penalty score the further from the center of board}
+\EndFor
+\State \Return {column score} 
+\end{algorithmic}
+\end{algorithm}
+
+### Aggressive Player
+
+A player that uses an aggressive strategy, always rolling at least 3 times.
+There are two skill levels, the decent and advanced.
+The decent level will stop if a column is completed, the chance of failing $\ge75\%$, or after rolling the maximum number of times before expected loss exceeds expected gains. The failing roll chance and maximum roll amount is based on Tate & Renner's odds table.
+The advanced level inherits the stopping logic of the decent level and uses Algorithm 1 for penalty scoring logic to pick columns.
+
+### Rule of 28 Player
+
+A player that uses the Rule of 28 strategy, always stopping after reaching the point threshold of 28.
+The Rule of 28 is defined below:
+
+```{r RO28table, echo=FALSE}
+kable(RO28_table, 
+      col.names=c("Columns", "2","3","4","5","6","7","8","9","10","11","12"), 
+      format='latex', 
+      caption = "Rule of 28 Scoring (Keller 1986)"
+) %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+Add the values for each number marked or advanced in each column during the current turn.
+Also note that each column counts double when a marker is placed.
+Add two points if all three columns marked are odd; subtract two points if all three columns are even.
+Add four points if all three columns are less than eight, or if all three are greater than six.
+When the total for the current turn reaches 28 or more, stop rolling (but do not stop before all three markers are placed) (Keller 1986).
+
+An example of a turn would look like:
+
+Roll 2,2,3,3.
+Mark and advance 5.
+Count 6 (mark 5) plus 3 (advance 5) for a total of $6+3=9$.
+Roll 1,2,2,4.
+Mark 3 and 6.
+Add 10 (mark 3) plus 4 (mark 6) for $9+10+4=23$, plus and additional 4 (because 3, 5, and 6 are all less than 7) for a total of $23+4=27$.
+Roll 2,4,6,6.
+Advance 6.
+Add 2 for a total of $27+2=29$, and then stop since total $\ge28$.
+
+\noindent The rule will have you stop within one roll of the correct spot about 75% of the time.
+
+There are two skill levels, the pure and smart.
+The pure level follows the rule exactly, which Keller warns against, saying to use your own judgement on when to stop in certain cases.
+The smart level implements judgement on when to stop, not following the rule exactly.
+This includes stopping if a column is completed before 28 points, and uses Algorithm 1 for penalty scoring logic to pick columns.
+
+## DQN Structure
+
+Since our DQN follows the NN structure, it consists of an input(s), hidden layer(s), and output layer.
+We also use a policy which will return an action to the environment.
+This action will generate a reward that will reinforce good decisions.
+The environment will then observe the new state $S_{t+1}$, and is numerically translated into the input layer.
+The input layer is composed of 51 neurons, each representing a feature the network will consider when determining to stop.
+These features are the network's permanent progress per column (11 neurons), opponent's permanent progress per column (11 neurons), current temp markers location (11 neurons), completed columns (11 neurons), number of rolls this turn (1 neurons), rule of 28 points (1 neuron), success probability (1 neuron), number of temp columns (1 neuron), number of completed columns (1 neuron), number of opponent completed columns (1 neuron), and number of column completed that turn (1 neuron).
+Our hidden layer has two layers, with 64 neurons each.
+The hidden layer size was chosen to maximize learning accuracy, reduce overfitting, and keep computational time low.
+Each hidden layer having 64 neurons is standard practice in machine learning since it is computationally efficient.
+Each one uses the Rectified Linear Unit (ReLU) activation function, also known as the ramp function: $$\text{ReLU}(x)=max(0,x)=\frac{x+|x|}{2}={\begin{cases}x&{\text{if }}x>0\\0&\text{if }x\leq 0\end{cases}}$$where x is the input to a hidden layer neuron.
+If $x$ is negative or zero it will return $0$, and if $x$ is positive it returns $x$.
+Each hidden layer uses 20% dropout to reduce overfitting.
+The output layer uses a linear activation function to return a Q-value since they are continuous.
+
+See Appendix \@ref(ApdxCode) for the code used to build the model, as well as the Github repository containing all the code used.
+
+```{r dqn, echo=FALSE, fig.cap="DQN Model Architecture", out.width="0.9\\linewidth",fig.align="center",fig.alt="Architecture of the Deep Q-Network"}
+include_graphics(path = "figure/dqn.png")
+```
+
+^[Figure \@ref(fig:dqn) Retrieved from https://medium.com/@samina.amin/deep-q-learning-dqn-71c109586bae]
+
+## Training
+
+The hyperparameters that we set for the first training session are the learning rate ($\alpha$), discount factor ($\gamma$), and epsilon ($\epsilon$) along with its decay and minimum, and batch size.
+During our training we will be using the epsilon-greedy policy, where $\epsilon$ is the probability of a random action being selected and $1-\epsilon$ is the probability of the highest Q-value action being selected. 
+
+The random action chance starts at 1 and will decrease by a factor of 0.995 every episode until it reaches a minimum of 0.01.
+The learning rate is initialized to 0.0001, as a sufficiently small learning rate enables the convergence of a Q-value.
+Discount factor is initialized to 0.95 to help ensure convergence and the long-term reward maximizing strategy while keeping the computational time low. After each training session we will adjust the hyperparameters based on the model's performance.
+
+Batch size is the number of random samples from the experience replay buffer that will be used to update the network's Q-values.
+It is initialized to 16, as it provides low computational time while maintaining good accuracy from during training.
+The experience replay buffer is the space where each turn is stored, that is the collection of a state, the action, its reward, and the next state.
+We set this to have a maximum size of 1000, so 16 random samples will be selected from here to update the Q-values.
+
+During the training period, the DQN is trained against the decent and advanced level players, as well as the random player. One episode will represent a single game, or simulation.
+The opponent is selected randomly for each simulation.
+For each episode, the overall win rate, win rate against each individual opponent, epsilon value, reward, Q-value, Q-value loss, and average rule of 28 points are recorded to a CSV (comma-separated values) file for analysis.
+
+This analysis will be looking at these recorded values to find insights into possible strategies.
+This includes looking at the players the DQN has the best and worst win rates against to infer where its strengths and weaknesses lie.
+Looking at the reward value over time we will analyze the point at which it begins to make choices in an attempt to maximize the reward.
+Analyzing the overall win rate will inform us of the accuracy of the model, being able to see when the accuracy plateaus.
+Along with accuracy we can see the mean squared error for the Q-values, giving us more insight into the model's performance.

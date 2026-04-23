@@ -1,0 +1,59 @@
+\newpage
+
+# Literature Review {#lit-rev}
+
+<!-- Required to number equations in HTML files -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { equationNumbers: { autoNumber: "AMS" } }
+});
+</script>
+
+Research on finding optimal strategies and solving Can't Stop has been ongoing since the game's release in 1980.
+A main focus is developing a heuristic strategy or "rule of thumb", defined as a strategy that is easy and quick to execute for any player while gaining a meaningful advantage over other players.
+The earliest heuristic strategy is the Rule of 28 (Keller 1986).
+This strategy creates an easy-to-remember system of point scoring based on column and move choices, where the player stops upon reaching a score threshold of 28.
+The points for each column are based on the probability of getting that column in a roll, with more likely numbers being assigned less points, and unlikely numbers assigned high points.
+The Rule of 28 (Ro28) serves as a useful benchmark for developing other strategies.
+
+A common approach to finding strategies is using computer simulations to approximate or solve a game.
+Complicated games like Can't Stop are difficult to solve due to the computation time, so breaking the game down into simple, solitaire versions or "toy" games, which are solvable can provide useful insight into the full game.
+The Retrograde Approximation Algorithms have solved simple versions of one-player games, up to 5-sided dice with the shortest column of length 2.
+2-player games were solved up to 4-sided dice with a shortest column of 1 (Fang, Glenn, & Kruskal 2008).
+These algorithms combine Newton's method and retrograde analysis to solve the game by modeling it as a finite, cyclic graph which can be used to show the existence of unique optimal solutions.
+The algorithms are iterated over the graph representations until the algorithm converges to a value after enough time.
+From the value they get the game theoretic optimal play.
+From these solutions, patterns can be found to approximate optimal strategies for the full game.
+
+The Rule of 28 heuristic was generalized, so it can be used for the toy games (Glenn & Aloi 2009).
+However, with the generalized heuristic there are many new factors to consider adding for the scoring, such as difficulty values for each column, the weight of individual moves, difficulty scores for different column combinations, and the current positions of markers.
+Glenn & Aloi used a genetic algorithm to optimize these factors' scoring values, involving encoding different parts of the game to be run for over 250,000 simulated games.
+They found their genetic algorithm when ran against the pure Rule of 28 in toy versions, showing an improvement over the Rule of 28.
+From this improved toy Can't Stop strategy, we can see that there is possible improvement over the Rule of 28, which could translate into the full game.
+
+Another similar game to Can't Stop is backgammon, a very popular gambling dice game with a body of research on developing different optimized strategies and computer algorithms.
+In backgammon, two players are racing their pieces to their home spot.
+If a piece is alone at a stage, the opponent can "blot" it, sending back to the start, resetting your progress.
+Because of the dice rolling, race to finish first, and possibility to lose progress, backgammon strategies and their development process can provide insight into researching Can't Stop.
+One backgammon method with successful application to Can't Stop is the rollout method, which resulted in a Can't Stop program that wins most games (Canakci, Serrano, Roy, & Kruskal 2016).
+A rollout is a Monte Carlo evaluation of a position in which the computer plays a position to completion many times (typically thousands of trials), using different random dice sequences in each trial (Tesauro 2002).
+The rollout method determines the best move by playing the game thousands of times against itself using each option and then picks the option with the best win rate.
+While this approach wins, it wins via complex computations which are difficult to fully integrate into a heuristic strategy that can be implemented by a human.
+However, we can analyze the computer play to gain insight into new approaches.
+The other approach they used was neural networks, a machine learning method.
+They chose to use a self-teaching network similar to the backgammon network TDGammon.
+Due to the long training period required to get desirable results, this method was ultimately abandoned despite showing some promise.
+If we train a computer to play Can't Stop, then we can try to gain insight into new approaches to a heuristic strategy.
+
+Machine learning is the study of artificial intelligence focused on the development of statistical algorithms that learn from data to make accurate inferences about new unseen data.
+Neural networks are a machine learning model that takes inputs, passes it through neurons to transform the inputs, and then an activation function outputs a prediction.
+Neural networks work well for the type of training and learning required for board games.
+A useful type of neural networks is the reinforcement learning deep Q network.
+Deep Q networks use Q learning, defined as an algorithm that trains an agent to assign values to all possible actions in its current state, and picks the action with the highest value.
+Learning to play Can't Stop with a Deep Q Network (Cheong 2020) shows that the deep Q networks can effectively handle the task of learning Can't Stop.
+Their implementation showed some success in creating a unique strategy.
+However, it got stuck on a safe, risk-free approach.
+The safe, risk-free approach is typically less effective than the Rule of 28, making it not an optimal strategy. This is similar to an overly cautious poker player that seeks to minimize risk rather than maximizing their expected value.
+
+There is still further analysis not yet covered using these deep Q networks on Can't Stop that could provide insight on how to improve our current knowledge of the best heuristic strategies.
+We are going to train a deep Q network to play Can't Stop and perform an analysis on the network to find possible improvements to our understanding of optimal Can't Stop strategies.

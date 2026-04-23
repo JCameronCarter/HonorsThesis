@@ -1,0 +1,163 @@
+\newpage
+
+```{r include_packages_2, include = FALSE}
+# This chunk ensures that the thesisdown package is
+# installed and loaded. This thesisdown package includes
+# the template files for the thesis and also two functions
+# used for labeling and referencing
+if (!require(remotes)) {
+  if (params$`Install needed packages for {thesisdown}`) {
+    install.packages("remotes", repos = "https://cran.rstudio.com")
+  } else {
+    stop(
+      paste(
+        'You need to run install.packages("remotes")',
+        "first in the Console."
+      )
+    )
+  }
+}
+if (!require(dplyr)) {
+  if (params$`Install needed packages for {thesisdown}`) {
+    install.packages("dplyr", repos = "https://cran.rstudio.com")
+  } else {
+    stop(
+      paste(
+        'You need to run install.packages("dplyr")',
+        "first in the Console."
+      )
+    )
+  }
+}
+if (!require(ggplot2)) {
+  if (params$`Install needed packages for {thesisdown}`) {
+    install.packages("ggplot2", repos = "https://cran.rstudio.com")
+  } else {
+    stop(
+      paste(
+        'You need to run install.packages("ggplot2")',
+        "first in the Console."
+      )
+    )
+  }
+}
+if (!require(bookdown)) {
+  if (params$`Install needed packages for {thesisdown}`) {
+    install.packages("bookdown", repos = "https://cran.rstudio.com")
+  } else {
+    stop(
+      paste(
+        'You need to run install.packages("bookdown")',
+        "first in the Console."
+      )
+    )
+  }
+}
+if (!require(thesisdown)) {
+  if (params$`Install needed packages for {thesisdown}`) {
+    remotes::install_github("ismayc/thesisdown")
+  } else {
+    stop(
+      paste(
+        "You need to run",
+        'remotes::install_github("ismayc/thesisdown")',
+        "first in the Console."
+      )
+    )
+  }
+}
+library(thesisdown)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+library(knitr)
+library(kableExtra)
+```
+
+# Introduction {#intro}
+
+
+
+## Can't Stop Description
+
+Can't Stop is a board game developed by Sid Sackson and published by Parker Brothers in 1980.
+It is a two to four player jeopardy dice game where each player tries to get to the top of three columns first.
+We define a jeopardy dice game as a game that uses one or more dice as a random device, where the main decision is whether or not to jeopardize previous gains by rolling dice for possible greater gains with a risk of losing all gains from that turn.
+
+In Can't Stop, during a player's turn they roll 4 six-sided dice, which will allow the player to either make progress (greater gains) towards the top of a column or reset their progress (jeopardize previous gains) and end the turn.
+
+Other games in the jeopardy dice game genre include Pig, Cosmic Wimpout, Twenty-One, and Macao.
+
+```{r gameboard, echo=FALSE, fig.cap="Sample Can't Stop game in progress", out.width="0.4\\linewidth", fig.align="center",fig.alt="A game of Can't Stop in Progress"}
+include_graphics(path = "figure/CantStopsm.png")
+```
+
+^[Figure \@ref(fig:gameboard) Retrieved from https://en.wikipedia.org/wiki/Can%27t_Stop_(board_game)]
+
+Informally, we define a game as competitive rule-based play involving multiple players.
+The players take turns making progress towards a goal, and the first player to reach this goal is deemed the winner.
+A mathematical definition of a game is the specification of a set of players, rules for playing the game, and an assignment of payoffs or utilities to all possible endings resulting from the various actions of the players.
+Rules specify the order and consequence of moves for the various players, how the game ends, and who gets what under various endings (Packel 2006).
+We can further define a player and payoff as someone who makes choices and receives payoffs, and a positive or negative number assigned to each possible game end respectively (Rapoport 1966).
+While there are different types of games based on the overall payoff, we will only consider zero-sum games, a game where the players' payoffs sum to zero. Can't Stop is a zero-sum game.
+
+A zero-sum game is a game of competitive interactions where one player's gain is another player's loss.
+These types of games can be solved, which means we can determine the outcome or possible outcomes of each game, given certain assumptions about the players.
+These solutions develop into a strategy, where the answer to a player's choices are specified in advance.
+The optimal play, also referred to as a saddle point or minimax, is the move that maximizes your payoff while minimizing your opponent's payoff based on the opponent's move choice.
+For each move you can make, you assume your opponent picks your worst-case scenario loss.
+From all the possible worst cases, pick the move that with the smallest loss.
+This process is minimizing your maximum losses.
+The other player will do the opposite, trying to maximize their minimum gains.
+The move choices of each player will result in optimal play.
+Assuming both players will act rationally and an optimal play exists, then both players will always have to pick the same move, since that move's payoff is the best they can do knowing the other will act rationally.
+A dominant strategy is mathematically unexploitable by other players, ensuring positive payoff regardless of your opponent's actions.
+Regardless of the opponent's move choice, you will always be maximizing your gains.
+Exploitable play uses opponents' mistakes and strategies to maximize your own payoff, by targeting an identified weakness.
+
+As an example, here is how these different strategies would look like in the game Rock-Paper-Scissors.
+The optimal play is to pick one of the three options randomly.
+Since you assume your opponent is playing rationally, the random choice maximizes your winning chance without giving your opponent an advantage, minimizing their winning chance.
+A dominant strategy would be if one player could use a hypothetical fourth move, such as "dynamite", that always wins.
+This move would be a dominant strategy for that player.
+The exploitable play would be a scenario where you notice the opponent always picks rock on the second round, so you exploit this behavior by always picking paper on the second round.
+However, while adopting an exploitive strategy can increase your gains, it exposes you to being re-exploited by your opponent.
+In the Rock-Paper-Scissors situation, if you start always picking paper, a clever opponent will start picking scissors.
+
+Another example of exploitive play is in the card game poker. In poker players often can take advantage of their opponent's mistakes, like never bluffing or bluffing too often. This would not be an optimal play because the player's strategy is not assuming the opponent is making their best decisions. Since the opponent is not making optimal decisions the player can exploit their opponent.
+
+## Game Materials
+
+The board consists of 11 columns, numbered 2 through 12, with lengths 3, 5, 7, 9, 11, 13, 11, 9, 7, 5, and 3 respectively.
+The game uses 4 six-sided dice, four colored sets of 11 markers, and three neutral-colored markers (runners).
+
+## Rules
+
+On a player's turn, they roll all 4 six-sided dice at once.
+They form two pairs of numbers with the dice that they have rolled.
+The sums of these pairs determine the column(s) in which the player must introduce a runner.
+You may have only a total of 3 runners active in any given turn.
+
+The player rerolls all 4 dice and again forms two dice pairs.
+After doing so, they again introduce or move one or two runners.
+
+Turns continue like this until the player stops voluntarily or is forced to stop because they cannot introduce or move a runner.
+
+If a player stops voluntarily, they replace each of their runners with one of their markers on the game board.
+If during a later turn, the player introduces a runner in a column that already has a marker, they place the runner on the square above the one occupied by their marker.
+
+If a player is forced to stop, they remove the runners from the board, losing all progress achieved that turn, and their turn ends. This is referred to as a bust, or busting.
+
+If a player's runner reaches the top of the column, and then they choose to stop, the player wins that column.
+The player to win 3 columns first wins the game.
+
+As an example, consider this scenario:
+
+At the start of a player's turn, they roll the 4 dice and get 2,3,4,5.
+Then the possible pairs are (2+3,4+5), (2+4,3+5), or (2+5,3+4), giving the player either (5,9), (6,8), or (7,7).
+If the player chooses the first pair, they place a runner on the bottom square of the 6 column and another runner at one the bottom square of the 9 column.
+If the player chooses the second pair, they place a runner on the bottom square of the 6 column and another runner on the bottom square of the 8 column.
+If the player chooses the third pair, they place a runner on the bottom square of the 7 column and then move it one square upwards.
+Each roll will result in at most three distinct pairs.
+A roll can return less than three possible pairs, such as 1,1,5,6 which gives (2,11) or (7,6), 3,3,3,5 which gives (6,8), or 4,4,4,4 which gives (8).

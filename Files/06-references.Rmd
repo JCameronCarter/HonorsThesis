@@ -1,0 +1,42 @@
+\newpage
+
+# References {-}
+<!--
+This manually sets the header for this unnumbered section.
+-->
+\markboth{References}{References}
+<!--
+To remove the indentation of the first entry.
+-->
+\noindent Canakci, B., Serrano, S., Roy, O., and Kruskal, C. (2016), "The Can't Stop Game", REU-CAAR 2016, Available at https://www.cs.umd.edu/~gasarch/REU/reupapers.html.
+
+\noindent Cheong, Y. J. (2020), "Learning to play Can't Stop with a Deep Q Network", Author. Available at https://yujia21.github.io/personal/cant-stop.html.
+
+\noindent Fang, H., Gleen, J., and Kruskal, C. (2008), "Retrograde Approximation Algorithms for Jeopardy Stochastic Games", *International Computer Games Association*, 31(2), 77-96. Available at https://doi.org/10.3233/icg-2008-31203.
+
+\noindent Glenn, J. R., & Aloi, C. J. (2009), "A Generalized Heuristic for Can’t Stop", *Proceedings of the Twenty-Second International FLAIRS Conference*, 421-426. Available at https://aaai.org/papers/flairs-2009-123/.
+
+\noindent James, G., Witten, D., Hastie, T., and Tibshirani, R. (2021), *An Introduction to Statistical Learning* (2nd ed.), New York City, NY: Springer.
+
+\noindent Keller, M. (1986), "Can't Stop? Try The Rule of 28", Author, Available at https://www.solitairelaboratory.com/cantstop.html.
+
+\noindent Packel, E. (2006), *The Mathematics of Games and Gambling* (2nd ed.), Washington, DC: The Mathematical Association of America.
+
+\noindent Rapoport, A. (1966), *Two Person Game Theory*, Garden City, NY: Dover Publications.
+
+\noindent Sutton, R., and Barto, A. (2015), *Reinforcement Learning: An Introduction* (2nd ed.), Cambridge, MA: The MIT Press.
+
+\noindent Tate and Renner (2007), "Can't Stop Odds", Author, Available at https://www.taterenner.com/cantstop.php.
+
+\noindent Tesauro, G. (2002), "Programming backgammon using self-teaching neural nets", *Artificial Intelligence*, 134, 181-199, Available at https://doi.org/10.1016/S0004-3702(01)00110-2.
+
+\noindent Van Hasselt, H., Guez, A., and Silver, D. (2016), "Deep reinforcement learning with double q-learning", *Proceedings of the AAAI conference on artificial intelligence*, 30(1), Available at https://doi.org/10.1609/aaai.v30i1.10295.
+
+\noindent Watkins, C. (1989), *Learning from Delayed Rewards*, Ph.D. dissertation, King's College London.
+
+<!--
+To create a hanging indent and spacing between entries. This line may need 
+to be removed for styles that don't require the hanging indent.
+-->
+
+\setlength{\parindent}{-0.20in}

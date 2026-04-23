@@ -1,0 +1,187 @@
+% YSU.sty: A package for LaTeX preparation of a thesis for 
+% Youngstown State University College of Graduate Studies
+% Initial version Patrick B. Pirilla, last modified February 6, 2011
+% Later edited by Tara McCart, May 2014
+% Updated for thesisdown by G. Jay Kerns, Thanksgiving 2022
+
+% This package is specifically tailored to using documentclass[12pt]{article}
+
+% Set Page Layout
+\usepackage[letterpaper, margin=1in]{geometry}
+
+\usepackage{setspace}
+\usepackage{indentfirst}
+\doublespacing
+
+% Preset Document Information
+\newcommand{\THESISTitle}{Thesis Title}
+\newcommand{\THESISAuthor}{Author}
+\newcommand{\THESISMonth}{MonthY}
+\newcommand{\THESISYear}{Year}
+\newcommand{\THESISAdvisor}{Advisor}
+\newcommand{\THESISCommitteeA}{Member}
+\newcommand{\THESISCommitteeB}{Member}
+\newcommand{\THESISDegree}{Master of Science}
+\newcommand{\THESISProgram}{Mathematics}
+\newcommand{\THESISdeanNAME}{Salvatore A.~Sanders, PhD}
+
+% Create commands to customize document information
+\renewcommand*{\title}[1]{\renewcommand{\THESISTitle}{#1}}
+\renewcommand*{\author}[1]{\renewcommand{\THESISAuthor}{#1}}
+\renewcommand*{\date}[2]{\renewcommand{\THESISMonth}{#1}\renewcommand{\THESISYear}{#2}}
+\newcommand*{\committee}[3]{\renewcommand{\THESISAdvisor}{#1}\renewcommand{\THESISCommitteeA}{#2}\renewcommand{\THESISCommitteeB}{#3}}
+\newcommand{\YSUdegree}[2]{\renewcommand{\THESISDegree}{#1}\renewcommand{\THESISProgram}{#2}}
+
+% Sets document formatting parameters, so that they may be customized more easily.
+\newcommand{\THESISsigLINE}{180pt}
+\newcommand{\THESISsigNAME}{56pt}
+\newcommand{\THESISsigDATE}{16pt}
+\newcommand{\THESISsigGAP}{18pt}
+\newcommand{\THESISsigDATEup}{-33.5pt}
+\newcommand{\THESISsigNAMEup}{-16pt}
+\newcommand{\THESIScopyGAP}{180pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN Command for printing the title page
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\createtitlepage}{
+\begin{titlepage}
+
+\vspace*{1\baselineskip}
+
+\begin{center}
+
+\vspace{52pt}
+
+\normalsize{Murray State University Honors College}\vspace{9pt}
+%\LARGE\textbf{\THESISTitle}\vspace{35pt}
+
+\normalsize{HONORS THESIS}\vspace{9pt}
+
+\normalsize{Certificate of Approval}\vspace{18pt}
+
+\normalsize{\THESISTitle}\vspace{18pt}
+
+\THESISAuthor\vspace{-9pt}
+
+\normalsize{May 2026}
+
+\vspace{35pt}
+
+\normalsize
+
+\end{center}
+
+\vspace{56pt}
+
+\noindent{Approved to fulfill the} \hfill \underline{\hspace{\THESISsigLINE}}\vspace{-9pt}
+
+\noindent{requirements of HON 437} \hfill Dr. Christopher Mecklin, Advisor\vspace{-9pt}
+
+\hfill Mathematics and Statistics
+
+\noindent{Approved to fulfill the} \hfill \underline{\hspace{\THESISsigLINE}}\vspace{-9pt}
+
+\noindent{Honors Thesis requirement} \hfill Dr. Jessica Naber, Executive Director\vspace{-9pt}
+
+\noindent{of the Murray State Honors} \hfill Honors College\vspace{-9pt}
+
+\noindent{Diploma}
+
+\end{titlepage}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN Command for printing the signature page
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\createsignaturepage}{\thispagestyle{empty}\pagenumbering{gobble}
+
+%\vspace*{\fill}
+
+\begin{center}
+Examination Approval Page
+\end{center}
+
+\vspace{12pt}
+
+\noindent \normalsize \underline{Author:} \THESISAuthor
+
+\noindent \normalsize \underline{Project Title:} \THESISTitle
+
+\noindent \normalsize \underline{Department:} Mathematics and Statistics
+
+\noindent \normalsize \underline{Date of Defense:} April 22\textsuperscript{nd}, 2026
+
+\vspace{12pt}
+
+\noindent Approval by Examining Committee:
+
+\vspace{45pt}
+
+\noindent\underline{\hspace{180pt}}\hspace{100pt}\underline{\hspace{100pt}}
+
+\noindent\THESISAdvisor, Advisor \hspace{100pt} Date
+
+\vspace{\THESISsigGAP}
+
+\noindent\underline{\hspace{180pt}}\hspace{100pt}\underline{\hspace{100pt}}
+
+\noindent\THESISCommitteeA, Committee Member \hspace{42pt} Date
+
+\vspace{\THESISsigGAP}
+
+\noindent\underline{\hspace{180pt}}\hspace{100pt}\underline{\hspace{100pt}}
+
+\noindent\THESISCommitteeB, Committee Member \hspace{69pt} Date
+
+\vspace*{\fill}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% BEGIN Command for printing the copyright page
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\createcopyrightpage}{\thispagestyle{empty}
+
+\vspace*{\THESIScopyGAP}
+\begin{center}
+
+\THESISTitle
+
+\vspace*{\THESIScopyGAP}
+
+Submitted in partial fulfillment\vspace{-9pt}\\
+of the requirements\vspace{-9pt}\\
+for the Murray State University Honors Diploma\\
+
+\THESISAuthor
+
+May 2026
+\end{center}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcounter{THESISpages}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom environment for aknowledgements [sic]
+
+\newenvironment{aknowledgements}{\clearpage\stepcounter{THESISpages}
+\pagestyle{plain} \pagenumbering{roman} \setcounter{page}{\arabic{THESISpages}}
+\large{\begin{center}\textbf{ACKNOWLEDGEMENTS}\end{center}}}
+{\clearpage}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom abstract environment
+
+\renewenvironment{abstract}{\clearpage\stepcounter{THESISpages}
+\pagestyle{plain} \pagenumbering{roman} \setcounter{page}{\arabic{THESISpages}}
+\large{\begin{center}\textbf{ABSTRACT}\end{center}}}
+{\clearpage}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Custom environment for thesis body (Plain page style)
+
+\newenvironment{thesis}{\clearpage\pagestyle{plain} \pagenumbering{arabic} \setcounter{page}{1}}{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
